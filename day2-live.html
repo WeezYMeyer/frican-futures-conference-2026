@@ -108,6 +108,14 @@
   }
   .video-placeholder .icon{font-size:38px;}
   .video-placeholder p{margin:0;font-size:14px;max-width:360px;line-height:1.6;}
+  .video-placeholder .holding-eyebrow{
+    font-size:12px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;
+    color:var(--green);margin-bottom:4px;
+  }
+  .video-placeholder .holding-date{
+    font-size:clamp(28px,4vw,40px);font-weight:800;color:#FFFFFF;
+    margin-bottom:6px;
+  }
   .video-placeholder code{
     background:rgba(255,255,255,0.08);
     padding:2px 8px;border-radius:6px;font-size:12.5px;
@@ -228,16 +236,18 @@
           <div class="video-frame">
             <!--
               ============================================================
-              PASTE YOUR VIMEO LIVE EMBED CODE HERE.
-              Replace the <div class="video-placeholder">...</div> block
-              below with the <iframe> Vimeo gives you. Keep the iframe
+              This is a public-facing "holding slide" — shown to visitors
+              before the real stream starts. When you're ready to go live,
+              replace the <div class="video-placeholder">...</div> block
+              below with the Vimeo <iframe> embed code. Keep the iframe
               inside this .video-frame div so it stays full-size and
               responsive.
               ============================================================
             -->
             <div class="video-placeholder">
-              <div class="icon">▶</div>
-              <p>Day 2 livestream will appear here.<br>Paste your Vimeo embed <code>&lt;iframe&gt;</code> code in place of this placeholder in <code>day2-live.html</code>.</p>
+              <div class="holding-eyebrow">African Futures Conference 2026</div>
+              <div class="holding-date">14 October 2026</div>
+              <p>The Day 2 livestream will begin here.<br>Check back at the scheduled time to watch live.</p>
             </div>
           </div>
           <div class="stream-meta">
@@ -256,36 +266,20 @@
         <div class="chat-body">
           <!--
             ============================================================
-            PASTE YOUR CHAT WIDGET EMBED CODE HERE.
-            Replace the <div class="chat-placeholder">...</div> block
-            below with your chat provider's <iframe> or <script> embed.
-            See SETUP-INSTRUCTIONS.md for a recommended free option.
+            This is a public-facing holding message — shown before the
+            real chat widget is connected. When ready, replace the
+            <div class="chat-placeholder">...</div> block below with your
+            chat provider's <iframe> or <script> embed. See
+            SETUP-INSTRUCTIONS.md for a recommended free option.
             ============================================================
           -->
           <div class="chat-placeholder">
             <div class="icon">💬</div>
-            <p>Live chat will appear here.<br>Set up a chat widget and paste its embed code in place of this placeholder in <code>day2-live.html</code>.</p>
+            <p>Live chat will be active once the stream has started.<br>Come back on the day to join the conversation.</p>
           </div>
         </div>
       </div>
 
-    </div>
-  </div>
-
-  <div class="below-fold">
-    <div class="info-strip">
-      <div class="info-item">
-        <div class="label">Conference</div>
-        <div class="value">African Futures Conference 2026 — From Data to Decisions</div>
-      </div>
-      <div class="info-item">
-        <div class="label">Day 1</div>
-        <div class="value">13 October — CSIR ICC, Pretoria + livestream</div>
-      </div>
-      <div class="info-item">
-        <div class="label">Questions?</div>
-        <div class="value">Reply to your confirmation email or visit the <a href="https://futures.issafrica.org" target="_blank" rel="noopener" style="color:var(--green);">AFI website</a></div>
-      </div>
     </div>
   </div>
 </main>
