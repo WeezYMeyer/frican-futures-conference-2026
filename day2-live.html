@@ -218,6 +218,33 @@
   @media (max-width:600px){
     .stream-tabs button{flex:1 1 calc(50% - 8px);justify-content:center;flex-direction:column;gap:1px;line-height:1.25;padding:9px 10px;font-size:13px;}
   }
+
+  /* ---- AFC live chat ---- */
+  .chat-ui{position:absolute;inset:0;display:flex;flex-direction:column;}
+  .chat-status{font-size:12px;color:#5A6270;background:#FFF7E0;padding:8px 14px;border-bottom:1px solid var(--mist);}
+  .chat-status:empty{display:none;}
+  .chat-list{list-style:none;margin:0;padding:12px 14px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
+  .chat-empty{margin:auto;text-align:center;color:#8A93A0;font-size:13px;line-height:1.6;max-width:240px;}
+  .chat-msg{font-size:13.5px;line-height:1.45;color:var(--ink);word-wrap:break-word;position:relative;padding-right:18px;}
+  .chat-msg .who{font-weight:700;color:var(--navy);margin-right:6px;}
+  .chat-msg .when{font-size:11px;color:#8A93A0;margin-left:4px;}
+  .chat-msg .host{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:var(--green);color:var(--midnight);border-radius:4px;padding:1px 5px;margin-right:6px;vertical-align:1px;}
+  .chat-msg.is-host{background:rgba(92,186,96,0.10);border-radius:8px;padding:6px 22px 6px 8px;}
+  .chat-msg .del{position:absolute;top:0;right:0;border:0;background:none;color:#C0392B;font-size:15px;cursor:pointer;padding:0 2px;line-height:1;}
+  .chat-form{border-top:1px solid var(--mist);background:var(--white);padding:10px 12px;display:flex;flex-direction:column;gap:6px;}
+  .chat-form .row{display:flex;gap:8px;}
+  .chat-form input,.chat-form textarea{flex:1;font-family:'Poppins',Arial,sans-serif;font-size:13.5px;border:1px solid var(--mist);border-radius:10px;padding:9px 11px;resize:none;color:var(--ink);background:var(--paper);min-width:0;}
+  .chat-form input:focus,.chat-form textarea:focus{outline:2px solid var(--green);outline-offset:-1px;background:#fff;}
+  .chat-form button{font-family:'Poppins',Arial,sans-serif;font-weight:700;font-size:13px;border:0;border-radius:10px;padding:0 16px;background:var(--green);color:var(--midnight);cursor:pointer;}
+  .chat-form button:disabled{opacity:.5;cursor:default;}
+  .chat-meta{font-size:11.5px;color:#8A93A0;display:flex;justify-content:space-between;gap:8px;}
+  .chat-meta a{color:var(--navy);cursor:pointer;text-decoration:underline;}
+  .chat-err{color:#C0392B;}
+  .chat-modbar{display:flex;gap:6px;align-items:center;padding:8px 12px;background:var(--midnight);color:#fff;font-size:12px;}
+  .chat-modbar[hidden]{display:none;}
+  .chat-modbar b{color:var(--green);margin-right:auto;}
+  .chat-modbar button{font-family:'Poppins',Arial,sans-serif;font-size:11.5px;font-weight:600;border:1px solid rgba(255,255,255,.35);background:none;color:#fff;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap;}
+  .chat-header .online{margin-left:auto;font-weight:500;font-size:12px;opacity:.8;}
   @media (max-width:980px){
     .stream-layout{grid-template-columns:1fr;}
     .chat-panel{height:480px;min-height:0;}
@@ -287,7 +314,7 @@
       </div>
 
       <div class="chat-panel">
-        <div class="chat-header"><span class="dot"></span> <span id="chatTitle">Live chat</span></div>
+        <div class="chat-header"><span class="dot"></span> <span id="chatTitle">Live chat</span><span class="online" id="chatOnline"></span></div>
         <div class="chat-body" id="chatBody">
           <!--
             ============================================================
@@ -316,58 +343,62 @@
 
 <script>
 /* ==================================================================
-   STREAM SETUP — paste each Vimeo embed here.
-   video: the src="..." URL from the Vimeo video embed code
-          (e.g. https://vimeo.com/event/1234567/embed)
-   chat:  the src="..." URL from that event's chat embed code
-          (e.g. https://vimeo.com/event/1234567/chat/)
-   Leave a value as '' to show the holding message instead.
-   Each tab can also be linked directly: day2-live.html#fr etc.
+   STREAM SETUP
+   video: the src="..." URL from the Vimeo embed code ('' = holding screen)
+   room:  which chat room this tab uses (rooms live on the AFC chat server)
+   Each tab can be linked directly: day2-live.html#fr etc.
+   Moderators: open the page with ?mod=YOUR_MOD_KEY to delete messages,
+   close/open the chat and clear a room.
    ================================================================== */
+var CHAT_SERVER = 'https://afc-chat-server.onrender.com';
 var STREAMS = [
   {
     "key": "en",
     "label": "Main stream",
     "sub": "English",
     "video": "https://vimeo.com/event/6254196/embed",
-    "chat": "https://vimeo.com/event/6254196/chat/",
     "hold": "The Day 2 English livestream will begin here.<br>Check back at the scheduled time to watch live.",
     "chatHold": "Live chat will be active once the stream has started.<br>Come back on the day to join the conversation.",
     "chatTitle": "Live chat",
-    "note": ""
+    "note": "",
+    "room": "d2-en",
+    "lang": "en"
   },
   {
     "key": "fr",
     "label": "Flux principal",
     "sub": "Français",
     "video": "https://vimeo.com/event/6255023/embed",
-    "chat": "https://vimeo.com/event/6255023/chat/",
     "hold": "La diffusion en direct en fran&ccedil;ais du 14 octobre commencera ici.<br>Revenez &agrave; l&rsquo;heure pr&eacute;vue pour suivre la conf&eacute;rence.",
     "chatHold": "Le chat en direct sera disponible d&egrave;s le d&eacute;but de la diffusion.",
     "chatTitle": "Chat en direct",
-    "note": "Interprétation simultanée en français (plénière principale uniquement)."
+    "note": "Interprétation simultanée en français (plénière principale uniquement).",
+    "room": "d2-fr",
+    "lang": "fr"
   },
   {
     "key": "breakout-1",
     "label": "Breakout Room 1",
     "sub": "English only",
     "video": "",
-    "chat": "",
     "hold": "Breakout Room 1 will stream here during parallel sessions.<br>English only &mdash; no French interpretation.",
     "chatHold": "Live chat will be active once the stream has started.<br>Come back on the day to join the conversation.",
     "chatTitle": "Breakout Room 1 chat",
-    "note": "Breakout Room 1 · English only — no French interpretation."
+    "note": "Breakout Room 1 · English only — no French interpretation.",
+    "room": "d2-b1",
+    "lang": "en"
   },
   {
     "key": "breakout-2",
     "label": "Breakout Room 2",
     "sub": "English only",
     "video": "",
-    "chat": "",
     "hold": "Breakout Room 2 will stream here during parallel sessions.<br>English only &mdash; no French interpretation.",
     "chatHold": "Live chat will be active once the stream has started.<br>Come back on the day to join the conversation.",
     "chatTitle": "Breakout Room 2 chat",
-    "note": "Breakout Room 2 · English only — no French interpretation."
+    "note": "Breakout Room 2 · English only — no French interpretation.",
+    "room": "d2-b2",
+    "lang": "en"
   }
 ];
 
@@ -377,8 +408,112 @@ var STREAMS = [
       chat=document.getElementById('chatBody'),
       note=document.getElementById('streamNote'),
       chatTitle=document.getElementById('chatTitle'),
-      holdVideo=frame.innerHTML, holdChat=chat.innerHTML;
-  function esc(t){var d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+      onlineEl=document.getElementById('chatOnline'),
+      holdVideo=frame.innerHTML, holdChat=chat.innerHTML, current=null;
+  function esc(t){var d=document.createElement('div');d.textContent=t==null?'':t;return d.innerHTML;}
+
+  /* ---------------- chat ---------------- */
+  var T={
+    en:{connecting:'Connecting to chat…',waking:'Chat is starting up — this can take up to a minute.',offline:'Reconnecting…',
+        empty:'No messages yet. Say hello!',name:'Your name',join:'Join chat',msg:'Write a message…',send:'Send',
+        as:'Chatting as',change:'change',closed:'Chat is closed at the moment.',online:'online',host:'Host'},
+    fr:{connecting:'Connexion au chat…',waking:'Le chat démarre — cela peut prendre jusqu’à une minute.',offline:'Reconnexion…',
+        empty:'Aucun message pour l’instant. Dites bonjour !',name:'Votre nom',join:'Rejoindre le chat',msg:'Écrire un message…',send:'Envoyer',
+        as:'Connecté(e) en tant que',change:'modifier',closed:'Le chat est fermé pour le moment.',online:'en ligne',host:'Hôte'}
+  };
+  var params=new URLSearchParams(location.search), modKey=params.get('mod')||'';
+  var store={get:function(k){try{return localStorage.getItem(k)||'';}catch(e){return '';}},set:function(k,v){try{localStorage.setItem(k,v);}catch(e){}}};
+  var socket=null, isMod=false, locked=false, ui=null, wakeTimer=null;
+
+  function loadSocket(cb){
+    if(window.io) return cb();
+    var s=document.createElement('script'); s.src=CHAT_SERVER+'/socket.io/socket.io.js'; s.onload=cb;
+    s.onerror=function(){ setTimeout(function(){ s.remove(); loadSocket(cb); }, 5000); if(ui) status(t().waking); };
+    document.head.appendChild(s);
+  }
+  function t(){ return T[(current&&current.lang)||'en']; }
+  function status(msg){ if(ui) ui.status.textContent=msg||''; }
+  function fmt(ts){ try{ var d=new Date(ts); return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}catch(e){return '';} }
+
+  function buildUI(){
+    chat.innerHTML='<div class="chat-ui">'+
+      '<div class="chat-modbar" hidden><b>Moderator</b><button data-a="lock"></button><button data-a="clear">Clear room</button><a style="color:#fff;font-size:11.5px;white-space:nowrap" target="_blank" data-a="export">Export CSV</a></div>'+
+      '<div class="chat-status"></div><ol class="chat-list" aria-live="polite"></ol>'+
+      '<form class="chat-form" autocomplete="off"></form></div>';
+    var root=chat.firstChild;
+    ui={root:root,status:root.querySelector('.chat-status'),list:root.querySelector('.chat-list'),form:root.querySelector('.chat-form'),mod:root.querySelector('.chat-modbar')};
+    ui.mod.querySelector('[data-a=lock]').onclick=function(){ socket.emit('lock',!locked); };
+    ui.mod.querySelector('[data-a=clear]').onclick=function(){ if(confirm('Clear all messages in this room?')) socket.emit('clear'); };
+    ui.mod.querySelector('[data-a=export]').href=CHAT_SERVER+'/export.csv?key='+encodeURIComponent(modKey);
+    renderForm(); renderList([]);
+  }
+  function renderMod(){
+    if(!ui) return; ui.mod.hidden=!isMod;
+    ui.mod.querySelector('[data-a=lock]').textContent=locked?'Open chat':'Close chat';
+  }
+  function renderForm(err){
+    var name=store.get('afcChatName'), L=t();
+    if(!name){
+      ui.form.innerHTML='<div class="row"><input name="n" maxlength="40" placeholder="'+L.name+'" required><button type="submit">'+L.join+'</button></div>'+(err?'<div class="chat-meta chat-err">'+esc(err)+'</div>':'');
+      ui.form.onsubmit=function(e){e.preventDefault();var v=ui.form.n.value.trim();if(!v)return;store.set('afcChatName',v);if(socket)socket.emit('name',v);renderForm();};
+      return;
+    }
+    if(locked && !isMod){ ui.form.innerHTML='<div class="chat-meta">'+L.closed+'</div>'; return; }
+    ui.form.innerHTML='<div class="row"><textarea name="m" rows="2" maxlength="500" placeholder="'+L.msg+'"></textarea><button type="submit">'+L.send+'</button></div>'+
+      '<div class="chat-meta"><span>'+L.as+' <b>'+esc(name)+'</b> · <a data-a="rename">'+L.change+'</a></span><span class="chat-err">'+esc(err||'')+'</span></div>';
+    var ta=ui.form.m;
+    ta.onkeydown=function(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();ui.form.requestSubmit?ui.form.requestSubmit():ui.form.onsubmit(e);} };
+    ui.form.querySelector('[data-a=rename]').onclick=function(){ store.set('afcChatName',''); renderForm(); };
+    ui.form.onsubmit=function(e){
+      if(e&&e.preventDefault)e.preventDefault(); var v=ta.value.trim(); if(!v||!socket||!socket.connected)return;
+      var btn=ui.form.querySelector('button'); btn.disabled=true;
+      socket.emit('message',v,function(r){ btn.disabled=false;
+        if(r&&r.ok){ ta.value=''; ta.focus(); ui.form.querySelector('.chat-err').textContent=''; }
+        else if(r&&r.error){ ui.form.querySelector('.chat-err').textContent=r.error; }
+      });
+    };
+  }
+  function msgEl(m){
+    var li=document.createElement('li'); li.className='chat-msg'+(m.mod?' is-host':''); li.dataset.id=m.id;
+    li.innerHTML=(m.mod?'<span class="host">'+t().host+'</span>':'')+'<span class="who">'+esc(m.name)+'</span>'+esc(m.text)+'<span class="when">'+fmt(m.ts)+'</span>'+
+      (isMod?'<button class="del" title="Delete">×</button>':'');
+    if(isMod) li.querySelector('.del').onclick=function(){ socket.emit('delete',m.id); };
+    return li;
+  }
+  function renderList(msgs){
+    ui.list.innerHTML='';
+    if(!msgs.length){ ui.list.innerHTML='<li class="chat-empty">'+t().empty+'</li>'; return; }
+    msgs.forEach(function(m){ ui.list.appendChild(msgEl(m)); });
+    ui.list.scrollTop=ui.list.scrollHeight;
+  }
+  function addMsg(m){
+    var e=ui.list.querySelector('.chat-empty'); if(e) e.remove();
+    var near=ui.list.scrollHeight-ui.list.scrollTop-ui.list.clientHeight<80;
+    ui.list.appendChild(msgEl(m)); if(near) ui.list.scrollTop=ui.list.scrollHeight;
+  }
+  function connect(){
+    socket=io(CHAT_SERVER,{auth:{modKey:modKey},transports:['websocket','polling']});
+    socket.on('connect',function(){ clearTimeout(wakeTimer); status(''); if(current) socket.emit('join',{room:current.room,name:store.get('afcChatName')}); });
+    socket.on('disconnect',function(){ status(t().offline); });
+    socket.on('connect_error',function(){ status(t().waking); });
+    socket.on('hello',function(h){ isMod=!!h.isMod; renderMod(); });
+    socket.on('history',function(h){ if(!current||h.room!==current.room)return; locked=h.locked; renderMod(); renderForm(); renderList(h.messages); });
+    socket.on('message',function(m){ if(current&&m.room===current.room) addMsg(m); });
+    socket.on('deleted',function(id){ var el=ui.list.querySelector('[data-id="'+id+'"]'); if(el) el.remove(); });
+    socket.on('cleared',function(){ renderList([]); });
+    socket.on('locked',function(x){ if(current&&x.room===current.room){ locked=x.locked; renderMod(); renderForm(); } });
+    socket.on('presence',function(p){ if(current&&p.room===current.room) onlineEl.textContent=p.online+' '+t().online; });
+  }
+  function openChat(st){
+    if(!ui) buildUI();
+    else { renderForm(); renderList([]); }
+    onlineEl.textContent='';
+    if(!socket){ status(t().connecting); wakeTimer=setTimeout(function(){ if(!socket||!socket.connected) status(t().waking); },4000);
+      loadSocket(connect); }
+    else if(socket.connected){ socket.emit('join',{room:st.room,name:store.get('afcChatName')}); }
+  }
+
+  /* ---------------- tabs ---------------- */
   STREAMS.forEach(function(st){
     var b=document.createElement('button');
     b.type='button';b.setAttribute('role','tab');b.dataset.key=st.key;
@@ -388,6 +523,8 @@ var STREAMS = [
   });
   function show(key,push){
     var st=STREAMS.filter(function(x){return x.key===key;})[0]||STREAMS[0];
+    if(current&&current.key===st.key) return;
+    current=st;
     [].forEach.call(tabs.children,function(b){
       var on=b.dataset.key===st.key; b.classList.toggle('active',on); b.setAttribute('aria-selected',on);
     });
@@ -395,12 +532,11 @@ var STREAMS = [
     frame.innerHTML = st.video
       ? '<iframe src="'+st.video+'" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen title="'+esc(st.label)+' livestream"></iframe>'
       : holdVideo.replace(/<p>[\s\S]*?<\/p>/, '<p>'+st.hold+'</p>');
-    chat.innerHTML = st.chat
-      ? '<iframe src="'+st.chat+'" referrerpolicy="strict-origin-when-cross-origin" title="'+esc(st.label)+' live chat"></iframe>'
-      : holdChat.replace(/<p>[\s\S]*?<\/p>/, '<p>'+st.chatHold+'</p>');
     chatTitle.textContent = st.chatTitle;
     note.textContent = st.note||'';
-    if(push && history.replaceState) history.replaceState(null,'','#'+st.key);
+    if(st.room && CHAT_SERVER){ openChat(st); }
+    else { ui=null; chat.innerHTML=holdChat.replace(/<p>[\s\S]*?<\/p>/, '<p>'+st.chatHold+'</p>'); }
+    if(push && history.replaceState) history.replaceState(null,'',location.search+'#'+st.key);
   }
   show((location.hash||'').slice(1),false);
   window.addEventListener('hashchange',function(){show(location.hash.slice(1),false);});
