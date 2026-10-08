@@ -195,6 +195,29 @@
   footer{padding:28px 0;text-align:center;}
   footer .fine{color:rgba(255,255,255,0.55);font-size:12.5px;}
 
+
+  /* ---- Stream tabs (language / breakout rooms) ---- */
+  .stream-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .stream-tabs button{
+    font-family:'Poppins',Arial,sans-serif;font-size:14px;font-weight:600;
+    padding:10px 18px;border-radius:999px;cursor:pointer;
+    color:rgba(255,255,255,0.8);background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.2);
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .stream-tabs button small{font-size:11px;font-weight:500;opacity:.75;}
+  .stream-tabs button:hover{border-color:var(--green);color:var(--green);}
+  .stream-tabs button.active{background:var(--green);color:var(--midnight);border-color:var(--green);}
+  .stream-tabs button.active small{opacity:.85;}
+  .stream-note{
+    margin-top:12px;font-size:13px;color:var(--navy);font-weight:600;
+    background:var(--paper);border-left:3px solid var(--green);
+    padding:8px 12px;border-radius:6px;
+  }
+  .stream-note:empty{display:none;}
+  @media (max-width:600px){
+    .stream-tabs button{flex:1 1 calc(50% - 8px);justify-content:center;flex-direction:column;gap:1px;line-height:1.25;padding:9px 10px;font-size:13px;}
+  }
   @media (max-width:980px){
     .stream-layout{grid-template-columns:1fr;}
     .chat-panel{height:480px;min-height:0;}
@@ -229,11 +252,12 @@
 
 <main>
   <div class="wrap">
+    <div class="stream-tabs" role="tablist" aria-label="Choose a stream"></div>
     <div class="stream-layout">
 
       <div>
         <div class="video-panel">
-          <div class="video-frame">
+          <div class="video-frame" id="videoFrame">
             <!--
               ============================================================
               This is a public-facing "holding slide" — shown to visitors
@@ -257,13 +281,14 @@
               <span class="tag">14 October 2026</span>
               <span class="tag">Fully online — open continent-wide</span>
             </div>
+            <div class="stream-note" id="streamNote"></div>
           </div>
         </div>
       </div>
 
       <div class="chat-panel">
-        <div class="chat-header"><span class="dot"></span> Live chat</div>
-        <div class="chat-body">
+        <div class="chat-header"><span class="dot"></span> <span id="chatTitle">Live chat</span></div>
+        <div class="chat-body" id="chatBody">
           <!--
             ============================================================
             This is a public-facing holding message — shown before the
@@ -288,5 +313,98 @@
   <div class="fine">© 2026 African Futures &amp; Innovation Programme · #AfricanFutures2026 · #AFC2026</div>
 </footer>
 
+
+<script>
+/* ==================================================================
+   STREAM SETUP — paste each Vimeo embed here.
+   video: the src="..." URL from the Vimeo video embed code
+          (e.g. https://vimeo.com/event/1234567/embed)
+   chat:  the src="..." URL from that event's chat embed code
+          (e.g. https://vimeo.com/event/1234567/chat/)
+   Leave a value as '' to show the holding message instead.
+   Each tab can also be linked directly: day2-live.html#fr etc.
+   ================================================================== */
+var STREAMS = [
+  {
+    "key": "en",
+    "label": "Main stream",
+    "sub": "English",
+    "video": "https://vimeo.com/event/6254196/embed",
+    "chat": "https://vimeo.com/event/6254196/chat/",
+    "hold": "The Day 2 English livestream will begin here.<br>Check back at the scheduled time to watch live.",
+    "chatHold": "Live chat will be active once the stream has started.<br>Come back on the day to join the conversation.",
+    "chatTitle": "Live chat",
+    "note": ""
+  },
+  {
+    "key": "fr",
+    "label": "Flux principal",
+    "sub": "Français",
+    "video": "https://vimeo.com/event/6255023/embed",
+    "chat": "https://vimeo.com/event/6255023/chat/",
+    "hold": "La diffusion en direct en fran&ccedil;ais du 14 octobre commencera ici.<br>Revenez &agrave; l&rsquo;heure pr&eacute;vue pour suivre la conf&eacute;rence.",
+    "chatHold": "Le chat en direct sera disponible d&egrave;s le d&eacute;but de la diffusion.",
+    "chatTitle": "Chat en direct",
+    "note": "Interprétation simultanée en français (plénière principale uniquement)."
+  },
+  {
+    "key": "breakout-1",
+    "label": "Breakout Room 1",
+    "sub": "English only",
+    "video": "",
+    "chat": "",
+    "hold": "Breakout Room 1 will stream here during parallel sessions.<br>English only &mdash; no French interpretation.",
+    "chatHold": "Live chat will be active once the stream has started.<br>Come back on the day to join the conversation.",
+    "chatTitle": "Breakout Room 1 chat",
+    "note": "Breakout Room 1 · English only — no French interpretation."
+  },
+  {
+    "key": "breakout-2",
+    "label": "Breakout Room 2",
+    "sub": "English only",
+    "video": "",
+    "chat": "",
+    "hold": "Breakout Room 2 will stream here during parallel sessions.<br>English only &mdash; no French interpretation.",
+    "chatHold": "Live chat will be active once the stream has started.<br>Come back on the day to join the conversation.",
+    "chatTitle": "Breakout Room 2 chat",
+    "note": "Breakout Room 2 · English only — no French interpretation."
+  }
+];
+
+(function(){
+  var tabs=document.querySelector('.stream-tabs'),
+      frame=document.getElementById('videoFrame'),
+      chat=document.getElementById('chatBody'),
+      note=document.getElementById('streamNote'),
+      chatTitle=document.getElementById('chatTitle'),
+      holdVideo=frame.innerHTML, holdChat=chat.innerHTML;
+  function esc(t){var d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+  STREAMS.forEach(function(st){
+    var b=document.createElement('button');
+    b.type='button';b.setAttribute('role','tab');b.dataset.key=st.key;
+    b.innerHTML=esc(st.label)+(st.sub?' <small>'+esc(st.sub)+'</small>':'');
+    b.onclick=function(){show(st.key,true);};
+    tabs.appendChild(b);
+  });
+  function show(key,push){
+    var st=STREAMS.filter(function(x){return x.key===key;})[0]||STREAMS[0];
+    [].forEach.call(tabs.children,function(b){
+      var on=b.dataset.key===st.key; b.classList.toggle('active',on); b.setAttribute('aria-selected',on);
+    });
+    // only the active stream is loaded, so audio never doubles up
+    frame.innerHTML = st.video
+      ? '<iframe src="'+st.video+'" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen title="'+esc(st.label)+' livestream"></iframe>'
+      : holdVideo.replace(/<p>[\s\S]*?<\/p>/, '<p>'+st.hold+'</p>');
+    chat.innerHTML = st.chat
+      ? '<iframe src="'+st.chat+'" referrerpolicy="strict-origin-when-cross-origin" title="'+esc(st.label)+' live chat"></iframe>'
+      : holdChat.replace(/<p>[\s\S]*?<\/p>/, '<p>'+st.chatHold+'</p>');
+    chatTitle.textContent = st.chatTitle;
+    note.textContent = st.note||'';
+    if(push && history.replaceState) history.replaceState(null,'','#'+st.key);
+  }
+  show((location.hash||'').slice(1),false);
+  window.addEventListener('hashchange',function(){show(location.hash.slice(1),false);});
+})();
+</script>
 </body>
 </html>
