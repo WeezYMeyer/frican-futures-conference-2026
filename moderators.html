@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Moderator Chat View — African Futures Conference 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#212F56;--midnight:#172758;--green:#5CBA60;--teal:#2E7A78;--paper:#F4F6F8;--mist:#D8DEE6;--ink:#2B3242;--fs:17px;}
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{margin:0;font-family:'Poppins',Arial,sans-serif;background:var(--midnight);color:var(--ink);display:flex;flex-direction:column;}
+  header{background:var(--navy);color:#fff;padding:12px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-bottom:1px solid rgba(255,255,255,.08);}
+  header h1{font-size:16px;margin:0;font-weight:700;}
+  header h1 span{color:var(--green);}
+  .controls{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .controls a,.controls button{font-family:inherit;font-size:13px;font-weight:600;color:#fff;background:none;border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:7px 14px;cursor:pointer;text-decoration:none;}
+  .controls a.on,.controls button.on{background:var(--green);border-color:var(--green);color:var(--midnight);}
+  main{flex:1;display:grid;gap:14px;padding:14px;min-height:0;}
+  main.cols-2{grid-template-columns:1fr 1fr;}
+  main.cols-4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+  @media (max-width:820px){main.cols-2,main.cols-4{grid-template-columns:1fr;grid-template-rows:none;}}
+  .room{background:#fff;border-radius:14px;display:flex;flex-direction:column;min-height:320px;overflow:hidden;}
+  .room-head{background:var(--navy);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;}
+  .room-head .dot{width:9px;height:9px;border-radius:50%;background:#8A93A0;flex:none;}
+  .room-head .dot.live{background:var(--green);box-shadow:0 0 0 3px rgba(92,186,96,.25);}
+  .room-head b{font-size:15px;}
+  .room-head .meta{margin-left:auto;font-size:12px;opacity:.8;}
+  .room-head .new{background:var(--green);color:var(--midnight);font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;display:none;}
+  .list{list-style:none;margin:0;padding:12px 14px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;background:var(--paper);}
+  .empty{margin:auto;color:#8A93A0;font-size:14px;text-align:center;}
+  .msg{background:#fff;border:1px solid var(--mist);border-radius:10px;padding:10px 12px;font-size:var(--fs);line-height:1.45;cursor:pointer;position:relative;}
+  .msg .who{font-weight:700;color:var(--navy);font-size:calc(var(--fs) - 3px);display:block;margin-bottom:2px;}
+  .msg .when{font-weight:400;color:#8A93A0;font-size:12px;margin-left:6px;}
+  .msg.q{border-left:4px solid var(--green);}
+  .msg.host{background:rgba(92,186,96,.10);}
+  .msg.host .who::before{content:'HOST · ';color:var(--teal);}
+  .msg.done{opacity:.4;}
+  .msg.done::after{content:'✓ handled';position:absolute;top:8px;right:10px;font-size:11px;font-weight:700;color:var(--teal);}
+  .msg.fresh{animation:flash 2.5s ease;}
+  @keyframes flash{from{background:#E6F5E7;}to{background:#fff;}}
+  body.qonly .msg:not(.q){display:none;}
+  body.hidedone .msg.done{display:none;}
+  footer{color:rgba(255,255,255,.55);font-size:12px;padding:0 16px 12px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>AFC 2026 · <span>Moderator chat view</span></h1>
+  <div class="controls">
+    <a href="?day=1" id="d1">Day 1</a>
+    <a href="?day=2" id="d2">Day 2</a>
+    <button id="qonly" title="Show only messages containing a question mark">Questions only</button>
+    <button id="hidedone" title="Hide messages you have marked as handled">Hide handled</button>
+    <button id="smaller" title="Smaller text">A−</button>
+    <button id="bigger" title="Bigger text">A+</button>
+  </div>
+</header>
+<main id="rooms"></main>
+<footer>Read-only view of the online audience chat. Click a message to mark it as handled (only on this screen). Questions are marked with a green bar.</footer>
+
+<script>
+var CHAT_SERVER = 'https://afc-chat-server.onrender.com';
+var DAYS = {
+  '1': [ {room:'d1-en', label:'Day 1 · English'}, {room:'d1-fr', label:'Day 1 · Français'} ],
+  '2': [ {room:'d2-en', label:'Day 2 · English'}, {room:'d2-fr', label:'Day 2 · Français'},
+         {room:'d2-b1', label:'Day 2 · Breakout Room 1'}, {room:'d2-b2', label:'Day 2 · Breakout Room 2'} ]
+};
+(function(){
+  var params = new URLSearchParams(location.search);
+  var day = params.get('day') === '2' ? '2' : '1';
+  document.getElementById('d' + day).classList.add('on');
+  var store = {get:function(k){try{return localStorage.getItem(k);}catch(e){return null;}}, set:function(k,v){try{localStorage.setItem(k,v);}catch(e){}}};
+  var done = {}; try { done = JSON.parse(store.get('afcModDone') || '{}'); } catch(e) {}
+  function saveDone(){ store.set('afcModDone', JSON.stringify(done)); }
+
+  // text size + toggles
+  var fs = parseInt(store.get('afcModFs') || '17', 10);
+  function applyFs(){ document.documentElement.style.setProperty('--fs', fs + 'px'); store.set('afcModFs', fs); }
+  applyFs();
+  document.getElementById('bigger').onclick = function(){ fs = Math.min(fs + 2, 32); applyFs(); };
+  document.getElementById('smaller').onclick = function(){ fs = Math.max(fs - 2, 12); applyFs(); };
+  ['qonly','hidedone'].forEach(function(id){
+    var b = document.getElementById(id);
+    if (store.get('afcMod_' + id) === '1') { b.classList.add('on'); document.body.classList.add(id); }
+    b.onclick = function(){ var on = document.body.classList.toggle(id); b.classList.toggle('on', on); store.set('afcMod_' + id, on ? '1' : '0'); };
+  });
+
+  var rooms = DAYS[day];
+  var main = document.getElementById('rooms');
+  main.className = rooms.length > 2 ? 'cols-4' : 'cols-2';
+
+  function esc(t){ var d = document.createElement('div'); d.textContent = t == null ? '' : t; return d.innerHTML; }
+  function fmt(ts){ var d = new Date(ts); return ('0'+d.getHours()).slice(-2) + ':' + ('0'+d.getMinutes()).slice(-2); }
+
+  function loadIo(cb){
+    if (window.io) return cb();
+    var s = document.createElement('script'); s.src = CHAT_SERVER + '/socket.io/socket.io.js'; s.onload = cb;
+    s.onerror = function(){ document.querySelectorAll('.meta').forEach(function(m){ m.textContent = 'Chat server starting up…'; }); setTimeout(function(){ s.remove(); loadIo(cb); }, 5000); };
+    document.head.appendChild(s);
+  }
+
+  var panels = rooms.map(function(r){
+    var el = document.createElement('section'); el.className = 'room';
+    el.innerHTML = '<div class="room-head"><span class="dot"></span><b>' + esc(r.label) + '</b><span class="new">new</span><span class="meta">Connecting…</span></div>' +
+                   '<ol class="list"><li class="empty">No messages yet.</li></ol>';
+    main.appendChild(el);
+    return { cfg: r, el: el, list: el.querySelector('.list'), meta: el.querySelector('.meta'), dot: el.querySelector('.dot'), badge: el.querySelector('.new') };
+  });
+
+  function msgEl(m, fresh){
+    var li = document.createElement('li');
+    li.className = 'msg' + (/\?/.test(m.text) ? ' q' : '') + (m.mod ? ' host' : '') + (done[m.id] ? ' done' : '') + (fresh ? ' fresh' : '');
+    li.dataset.id = m.id;
+    li.innerHTML = '<span class="who">' + esc(m.name) + '<span class="when">' + fmt(m.ts) + '</span></span>' + esc(m.text);
+    li.onclick = function(){ if (done[m.id]) delete done[m.id]; else done[m.id] = 1; li.classList.toggle('done', !!done[m.id]); saveDone(); };
+    return li;
+  }
+  function render(p, msgs){
+    p.list.innerHTML = '';
+    if (!msgs.length) { p.list.innerHTML = '<li class="empty">No messages yet.</li>'; return; }
+    msgs.forEach(function(m){ p.list.appendChild(msgEl(m, false)); });
+    p.list.scrollTop = p.list.scrollHeight;
+  }
+  function add(p, m){
+    var e = p.list.querySelector('.empty'); if (e) e.remove();
+    var near = p.list.scrollHeight - p.list.scrollTop - p.list.clientHeight < 120;
+    p.list.appendChild(msgEl(m, true));
+    if (near) p.list.scrollTop = p.list.scrollHeight;
+    else { p.badge.style.display = 'inline-block'; }
+  }
+
+  loadIo(function(){
+    panels.forEach(function(p){
+      p.list.addEventListener('scroll', function(){ if (p.list.scrollHeight - p.list.scrollTop - p.list.clientHeight < 40) p.badge.style.display = 'none'; });
+      var s = io(CHAT_SERVER, { forceNew: true, transports: ['websocket', 'polling'] });
+      s.on('connect', function(){ p.dot.classList.add('live'); p.meta.textContent = 'Live'; s.emit('join', { room: p.cfg.room }); });
+      s.on('disconnect', function(){ p.dot.classList.remove('live'); p.meta.textContent = 'Reconnecting…'; });
+      s.on('connect_error', function(){ p.dot.classList.remove('live'); p.meta.textContent = 'Chat server starting up…'; });
+      s.on('history', function(h){ if (h.room === p.cfg.room) render(p, h.messages); });
+      s.on('message', function(m){ if (m.room === p.cfg.room) add(p, m); });
+      s.on('deleted', function(id){ var el = p.list.querySelector('[data-id="' + id + '"]'); if (el) el.remove(); });
+      s.on('cleared', function(){ render(p, []); });
+      s.on('presence', function(x){ if (x.room === p.cfg.room) var n = Math.max(0, x.online - 1); p.meta.textContent = 'Live · ' + n + (n === 1 ? ' viewer' : ' viewers') + ' in chat'; });
+    });
+  });
+})();
+</script>
+</body>
+</html>
