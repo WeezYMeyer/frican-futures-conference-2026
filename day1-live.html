@@ -215,6 +215,8 @@
     padding:8px 12px;border-radius:6px;
   }
   .stream-note:empty{display:none;}
+  .feedback-btn{display:inline-block;margin-top:14px;font-size:13.5px;font-weight:700;color:var(--midnight);background:var(--green);border-radius:999px;padding:10px 20px;text-decoration:none;}
+  .feedback-btn:hover{filter:brightness(1.05);}
   @media (max-width:600px){
     .stream-tabs button{flex:1 1 calc(50% - 8px);justify-content:center;flex-direction:column;gap:1px;line-height:1.25;padding:9px 10px;font-size:13px;}
   }
@@ -309,6 +311,7 @@
               <span class="tag">Hybrid — CSIR ICC, Pretoria + livestream</span>
             </div>
             <div class="stream-note" id="streamNote"></div>
+            <a href="evaluation.html?day=1" target="_blank" rel="noopener" class="feedback-btn">Share your Day 1 feedback &rarr;</a>
           </div>
         </div>
       </div>
@@ -451,7 +454,7 @@ var STREAMS = [
   }
   function msgEl(m){
     var li=document.createElement('li'); li.className='chat-msg'+(m.mod?' is-host':''); li.dataset.id=m.id;
-    li.innerHTML=(m.mod?'<span class="host">'+t().host+'</span>':'')+'<span class="who">'+esc(m.name)+'</span>'+esc(m.text)+'<span class="when">'+fmt(m.ts)+'</span>'+
+    li.innerHTML=(m.mod?'<span class="host">'+t().host+'</span>':'')+'<span class="who">'+esc(m.name)+'</span>'+(m.mod?esc(m.text).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener" style="color:#2E7A78;font-weight:600">$1</a>'):esc(m.text))+'<span class="when">'+fmt(m.ts)+'</span>'+
       (isMod?'<button class="del" title="Delete">×</button>':'');
     if(isMod) li.querySelector('.del').onclick=function(){ socket.emit('delete',m.id); };
     return li;
