@@ -30,6 +30,13 @@
   .room-head b{font-size:15px;}
   .room-head .meta{margin-left:auto;font-size:12px;opacity:.8;}
   .room-head .new{background:var(--green);color:var(--midnight);font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;display:none;}
+  .pollbox{background:#fff;border-bottom:1px solid var(--mist);padding:10px 14px;font-size:14px;}
+  .pollbox:empty{display:none;}
+  .pollbox .pq{font-weight:700;color:var(--navy);margin-bottom:6px;}
+  .pollbox .pq small{color:var(--green);font-size:11px;letter-spacing:1px;text-transform:uppercase;display:block;}
+  .pollbox .pb{position:relative;border:1px solid var(--mist);border-radius:8px;padding:5px 9px;margin-bottom:4px;overflow:hidden;}
+  .pollbox .pb i{position:absolute;inset:0 auto 0 0;background:rgba(92,186,96,.22);}
+  .pollbox .pb span{position:relative;display:flex;justify-content:space-between;gap:8px;}
   .list{list-style:none;margin:0;padding:12px 14px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;background:var(--paper);}
   .empty{margin:auto;color:#8A93A0;font-size:14px;text-align:center;}
   .msg{background:#fff;border:1px solid var(--mist);border-radius:10px;padding:10px 12px;font-size:var(--fs);line-height:1.45;cursor:pointer;position:relative;}
@@ -106,9 +113,9 @@ var DAYS = {
   var panels = rooms.map(function(r){
     var el = document.createElement('section'); el.className = 'room';
     el.innerHTML = '<div class="room-head"><span class="dot"></span><b>' + esc(r.label) + '</b><span class="new">new</span><span class="meta">Connecting…</span></div>' +
-                   '<ol class="list"><li class="empty">No messages yet.</li></ol>';
+                   '<div class="pollbox"></div><ol class="list"><li class="empty">No messages yet.</li></ol>';
     main.appendChild(el);
-    return { cfg: r, el: el, list: el.querySelector('.list'), meta: el.querySelector('.meta'), dot: el.querySelector('.dot'), badge: el.querySelector('.new') };
+    return { cfg: r, el: el, pollbox: el.querySelector('.pollbox'), list: el.querySelector('.list'), meta: el.querySelector('.meta'), dot: el.querySelector('.dot'), badge: el.querySelector('.new') };
   });
 
   function msgEl(m, fresh){
@@ -118,6 +125,13 @@ var DAYS = {
     li.innerHTML = '<span class="who">' + esc(m.name) + '<span class="when">' + fmt(m.ts) + '</span></span>' + esc(m.text);
     li.onclick = function(){ if (done[m.id]) delete done[m.id]; else done[m.id] = 1; li.classList.toggle('done', !!done[m.id]); saveDone(); };
     return li;
+  }
+  function renderPoll(p, poll){
+    if (!poll) { p.pollbox.innerHTML = ''; return; }
+    var total = poll.total || 0, h = '<div class="pq"><small>Live poll' + (poll.open ? '' : ' · closed') + ' · ' + total + (total === 1 ? ' vote' : ' votes') + '</small>' + esc(poll.question) + '</div>';
+    poll.options.forEach(function(o, i){ var pct = total ? Math.round(poll.counts[i] * 100 / total) : 0;
+      h += '<div class="pb"><i style="width:' + pct + '%"></i><span><span>' + esc(o) + '</span><b>' + poll.counts[i] + ' · ' + pct + '%</b></span></div>'; });
+    p.pollbox.innerHTML = h;
   }
   function render(p, msgs){
     p.list.innerHTML = '';
@@ -141,6 +155,8 @@ var DAYS = {
       s.on('disconnect', function(){ p.dot.classList.remove('live'); p.meta.textContent = 'Reconnecting…'; });
       s.on('connect_error', function(){ p.dot.classList.remove('live'); p.meta.textContent = 'Chat server starting up…'; });
       s.on('history', function(h){ if (h.room === p.cfg.room) render(p, h.messages); });
+      s.on('poll', function(x){ if (x.room === p.cfg.room) renderPoll(p, x.poll); });
+      s.on('poll:update', function(x){ if (x.room === p.cfg.room) renderPoll(p, x.poll); });
       s.on('message', function(m){ if (m.room === p.cfg.room) add(p, m); });
       s.on('deleted', function(id){ var el = p.list.querySelector('[data-id="' + id + '"]'); if (el) el.remove(); });
       s.on('cleared', function(){ render(p, []); });
