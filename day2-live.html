@@ -406,8 +406,7 @@ var STREAMS = [
     "key": "breakout-1",
     "label": "Breakout Room 1",
     "sub": "English only",
-    "video": "",
-    "yololiv": {"eventId": "1489091530529443840", "isEmbedPage": 1, "mediaType": "events", "filter": "event", "isCountdown": 1, "isDonation": 0, "isThumbnail": 1, "isPreEvent": 1, "isDesc": 0, "isDoc": 0, "isVideoIndex": 0, "isHightLights": 0, "isPlayList": 0, "isChat": 0, "isBrand": 0, "brandType": "default", "isTwoColumn": 0, "isAutoPlay": 0, "isInlinePlay": 0, "isDisableDVR": 0, "sizeType": "responsive", "isCoverText": 1, "coverText": "", "isPlayLogo": 1},
+    "video": "yolo.html?event=1489091530529443840",
     "hold": "Breakout Room 1 will stream here during parallel sessions.<br>English only &mdash; no French interpretation.",
     "chatHold": "Live chat will be active once the stream has started.<br>Come back on the day to join the conversation.",
     "chatTitle": "Breakout Room 1 chat",
@@ -419,8 +418,7 @@ var STREAMS = [
     "key": "breakout-2",
     "label": "Breakout Room 2",
     "sub": "English only",
-    "video": "",
-    "yololiv": {"eventId": "1489091763036491776", "isEmbedPage": 1, "mediaType": "events", "filter": "event", "isCountdown": 1, "isDonation": 0, "isThumbnail": 1, "isPreEvent": 1, "isDesc": 0, "isDoc": 0, "isVideoIndex": 0, "isHightLights": 0, "isPlayList": 0, "isChat": 0, "isBrand": 0, "brandType": "default", "isTwoColumn": 0, "isAutoPlay": 0, "isInlinePlay": 0, "isDisableDVR": 0, "sizeType": "responsive", "isCoverText": 1, "coverText": "", "isPlayLogo": 1},
+    "video": "yolo.html?event=1489091763036491776",
     "hold": "Breakout Room 2 will stream here during parallel sessions.<br>English only &mdash; no French interpretation.",
     "chatHold": "Live chat will be active once the stream has started.<br>Come back on the day to join the conversation.",
     "chatTitle": "Breakout Room 2 chat",
@@ -594,19 +592,6 @@ var STREAMS = [
     else if(socket.connected){ socket.emit('join',{room:st.room,name:store.get('afcChatName'),voterId:voterId}); }
   }
 
-  /* ---------------- YoloLiv player (breakout rooms) ---------------- */
-  var yoloQ = null;
-  function loadYolo(cb){
-    if (window.renderYoloLiv) return cb();
-    if (yoloQ) { yoloQ.push(cb); return; }
-    yoloQ = [cb];
-    var js = document.createElement('script'); js.type = 'module'; js.charset = 'utf-8';
-    js.src = 'https://view.yololiv.com/entry.js';
-    js.onload = function(){ var q = yoloQ; yoloQ = null; q.forEach(function(f){ f(); }); };
-    js.onerror = function(){ yoloQ = null; };
-    document.head.appendChild(js);
-  }
-
   /* ---------------- tabs ---------------- */
   STREAMS.forEach(function(st){
     var b=document.createElement('button');
@@ -623,11 +608,6 @@ var STREAMS = [
       var on=b.dataset.key===st.key; b.classList.toggle('active',on); b.setAttribute('aria-selected',on);
     });
     // only the active stream is loaded, so audio never doubles up
-    if (st.yololiv) {
-      var yid = 'yololiv-widget-' + Date.now() + '-' + st.yololiv.eventId;
-      frame.innerHTML = '<div class="yolo-wrap"><div id="' + yid + '"></div></div>';
-      loadYolo(function(){ try { window.renderYoloLiv('#' + yid, st.yololiv); } catch(e) {} });
-    } else
     frame.innerHTML = st.video
       ? '<iframe src="'+st.video+'" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen title="'+esc(st.label)+' livestream"></iframe>'
       : holdVideo.replace(/<p>[\s\S]*?<\/p>/, '<p>'+st.hold+'</p>');

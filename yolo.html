@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Breakout Room — African Futures Conference 2026</title>
+<style>
+  html,body{margin:0;padding:0;background:#000;height:100%;}
+  #player{width:100%;min-height:100%;}
+</style>
+</head>
+<body>
+<div id="player"></div>
+<script>
+/* Isolated YoloLiv player for the breakout room tabs on day2-live.html.
+   Loaded inside an iframe so YoloLiv's own styles can't change the live page. */
+(function(){
+  var ev = (new URLSearchParams(location.search).get('event') || '').replace(/\D/g, '');
+  if (!ev) return;
+  var holder = document.getElementById('player');
+  var inner = document.createElement('div');
+  inner.id = 'yololiv-widget-' + Date.now() + '-' + ev;
+  holder.appendChild(inner);
+  var opts = {"eventId":ev,"isEmbedPage":1,"mediaType":"events","filter":"event","isCountdown":1,"isDonation":0,"isThumbnail":1,"isPreEvent":1,"isDesc":0,"isDoc":0,"isVideoIndex":0,"isHightLights":0,"isPlayList":0,"isChat":0,"isBrand":0,"brandType":"default","isTwoColumn":0,"isAutoPlay":0,"isInlinePlay":0,"isDisableDVR":0,"sizeType":"responsive","isCoverText":1,"coverText":"","isPlayLogo":1};
+  var js = document.createElement('script');
+  js.src = 'https://view.yololiv.com/entry.js'; js.type = 'module'; js.charset = 'utf-8';
+  js.onload = function(){ window.renderYoloLiv('#' + inner.id, opts); };
+  document.head.appendChild(js);
+})();
+</script>
+</body>
+</html>
