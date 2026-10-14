@@ -98,6 +98,8 @@
     aspect-ratio:16/9;
     background:linear-gradient(135deg,var(--midnight),var(--navy));
   }
+  .video-frame .yolo-wrap{position:absolute;inset:0;overflow:auto;background:#000;}
+  .video-frame .yolo-wrap > div{width:100%;min-height:100%;}
   .video-frame iframe{
     position:absolute;top:0;left:0;width:100%;height:100%;border:0;
   }
@@ -244,9 +246,30 @@
   .chat-err{color:#C0392B;}
   .chat-modbar{display:flex;gap:6px;align-items:center;padding:8px 12px;background:var(--midnight);color:#fff;font-size:12px;}
   .chat-modbar[hidden]{display:none;}
+  .chat-modbar{flex-wrap:wrap;row-gap:6px;}
   .chat-modbar b{color:var(--green);margin-right:auto;}
   .chat-modbar button{font-family:'Poppins',Arial,sans-serif;font-size:11.5px;font-weight:600;border:1px solid rgba(255,255,255,.35);background:none;color:#fff;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap;}
   .chat-header .online{margin-left:auto;font-weight:500;font-size:12px;opacity:.8;}
+
+  /* ---- live poll ---- */
+  .chat-poll{border-bottom:1px solid var(--mist);background:#fff;padding:12px 14px;max-height:60%;overflow-y:auto;}
+  .chat-poll:empty{display:none;}
+  .poll-tag{font-size:10.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--green);}
+  .poll-q{font-weight:700;color:var(--navy);font-size:14px;margin:2px 0 10px;line-height:1.4;}
+  .poll-opt{display:block;width:100%;text-align:left;font-family:'Poppins',Arial,sans-serif;font-size:13px;border:1.5px solid var(--mist);background:#fff;border-radius:10px;padding:8px 10px;margin-bottom:6px;cursor:pointer;color:var(--ink);}
+  .poll-opt:hover{border-color:var(--green);}
+  .poll-bar{position:relative;border:1px solid var(--mist);border-radius:10px;padding:7px 10px;margin-bottom:6px;font-size:13px;overflow:hidden;}
+  .poll-bar i{position:absolute;inset:0 auto 0 0;background:rgba(92,186,96,.22);z-index:0;}
+  .poll-bar span{position:relative;z-index:1;display:flex;justify-content:space-between;gap:8px;}
+  .poll-bar.mine{border-color:var(--green);font-weight:600;}
+  .poll-meta{font-size:11.5px;color:#8A93A0;margin-top:4px;}
+  .poll-form[hidden]{display:none !important;}
+  .poll-form{background:var(--paper);border-bottom:1px solid var(--mist);padding:10px 12px;display:flex;flex-direction:column;gap:6px;}
+  .poll-form textarea,.poll-form input[type=text]{font-family:'Poppins',Arial,sans-serif;font-size:13px;border:1px solid var(--mist);border-radius:8px;padding:7px 9px;resize:vertical;}
+  .poll-form label{font-size:12px;color:#5A6270;display:flex;gap:6px;align-items:center;}
+  .poll-form .row{display:flex;gap:6px;}
+  .poll-form button{font-family:'Poppins',Arial,sans-serif;font-weight:700;font-size:12.5px;border:0;border-radius:8px;padding:7px 12px;cursor:pointer;background:var(--green);color:var(--midnight);}
+  .poll-form button.sec{background:var(--mist);color:var(--ink);}
   @media (max-width:980px){
     .stream-layout{grid-template-columns:1fr;}
     .chat-panel{height:480px;min-height:0;}
@@ -384,6 +407,7 @@ var STREAMS = [
     "label": "Breakout Room 1",
     "sub": "English only",
     "video": "",
+    "yololiv": {"eventId": "1489091530529443840", "isEmbedPage": 1, "mediaType": "events", "filter": "event", "isCountdown": 1, "isDonation": 0, "isThumbnail": 1, "isPreEvent": 1, "isDesc": 0, "isDoc": 0, "isVideoIndex": 0, "isHightLights": 0, "isPlayList": 0, "isChat": 0, "isBrand": 0, "brandType": "default", "isTwoColumn": 0, "isAutoPlay": 0, "isInlinePlay": 0, "isDisableDVR": 0, "sizeType": "responsive", "isCoverText": 1, "coverText": "", "isPlayLogo": 1},
     "hold": "Breakout Room 1 will stream here during parallel sessions.<br>English only &mdash; no French interpretation.",
     "chatHold": "Live chat will be active once the stream has started.<br>Come back on the day to join the conversation.",
     "chatTitle": "Breakout Room 1 chat",
@@ -396,6 +420,7 @@ var STREAMS = [
     "label": "Breakout Room 2",
     "sub": "English only",
     "video": "",
+    "yololiv": {"eventId": "1489091763036491776", "isEmbedPage": 1, "mediaType": "events", "filter": "event", "isCountdown": 1, "isDonation": 0, "isThumbnail": 1, "isPreEvent": 1, "isDesc": 0, "isDoc": 0, "isVideoIndex": 0, "isHightLights": 0, "isPlayList": 0, "isChat": 0, "isBrand": 0, "brandType": "default", "isTwoColumn": 0, "isAutoPlay": 0, "isInlinePlay": 0, "isDisableDVR": 0, "sizeType": "responsive", "isCoverText": 1, "coverText": "", "isPlayLogo": 1},
     "hold": "Breakout Room 2 will stream here during parallel sessions.<br>English only &mdash; no French interpretation.",
     "chatHold": "Live chat will be active once the stream has started.<br>Come back on the day to join the conversation.",
     "chatTitle": "Breakout Room 2 chat",
@@ -419,14 +444,17 @@ var STREAMS = [
   var T={
     en:{connecting:'Connecting to chat…',waking:'Chat is starting up — this can take up to a minute.',offline:'Reconnecting…',
         empty:'No messages yet. Say hello!',name:'Your name',join:'Join chat',msg:'Write a message…',send:'Send',
-        as:'Chatting as',change:'change',closed:'Chat is closed at the moment.',online:'online',host:'Host'},
+        as:'Chatting as',change:'change',closed:'Chat is closed at the moment.',online:'online',host:'Host',
+        poll:'Live poll',votes:'votes',pclosed:'Voting closed',pthanks:'Thanks for voting',ponevote:'vote'},
     fr:{connecting:'Connexion au chat…',waking:'Le chat démarre — cela peut prendre jusqu’à une minute.',offline:'Reconnexion…',
         empty:'Aucun message pour l’instant. Dites bonjour !',name:'Votre nom',join:'Rejoindre le chat',msg:'Écrire un message…',send:'Envoyer',
-        as:'Connecté(e) en tant que',change:'modifier',closed:'Le chat est fermé pour le moment.',online:'en ligne',host:'Hôte'}
+        as:'Connecté(e) en tant que',change:'modifier',closed:'Le chat est fermé pour le moment.',online:'en ligne',host:'Hôte',
+        poll:'Sondage en direct',votes:'votes',pclosed:'Vote clôturé',pthanks:'Merci pour votre vote',ponevote:'vote'}
   };
   var params=new URLSearchParams(location.search), modKey=params.get('mod')||'';
   var store={get:function(k){try{return localStorage.getItem(k)||'';}catch(e){return '';}},set:function(k,v){try{localStorage.setItem(k,v);}catch(e){}}};
-  var socket=null, isMod=false, locked=false, ui=null, wakeTimer=null;
+  var socket=null, isMod=false, locked=false, ui=null, wakeTimer=null, poll=null, myVote=null;
+  var voterId=store.get('afcVoterId'); if(!voterId){ voterId='v'+Math.random().toString(36).slice(2)+Date.now().toString(36); store.set('afcVoterId',voterId); }
 
   function loadSocket(cb){
     if(window.io) return cb();
@@ -440,15 +468,63 @@ var STREAMS = [
 
   function buildUI(){
     chat.innerHTML='<div class="chat-ui">'+
-      '<div class="chat-modbar" hidden><b>Moderator</b><button data-a="lock"></button><button data-a="clear">Clear room</button><a style="color:#fff;font-size:11.5px;white-space:nowrap" target="_blank" data-a="export">Export CSV</a></div>'+
-      '<div class="chat-status"></div><ol class="chat-list" aria-live="polite"></ol>'+
+      '<div class="chat-modbar" hidden><b>Moderator</b><button data-a="lock"></button><button data-a="clear">Clear room</button><button data-a="poll">Poll</button><a style="color:#fff;font-size:11.5px;white-space:nowrap" target="_blank" data-a="export">Export CSV</a></div>'+
+      '<div class="poll-form" hidden></div><div class="chat-status"></div><div class="chat-poll"></div><ol class="chat-list" aria-live="polite"></ol>'+
       '<form class="chat-form" autocomplete="off"></form></div>';
     var root=chat.firstChild;
-    ui={root:root,status:root.querySelector('.chat-status'),list:root.querySelector('.chat-list'),form:root.querySelector('.chat-form'),mod:root.querySelector('.chat-modbar')};
+    ui={root:root,status:root.querySelector('.chat-status'),list:root.querySelector('.chat-list'),form:root.querySelector('.chat-form'),mod:root.querySelector('.chat-modbar'),poll:root.querySelector('.chat-poll'),pform:root.querySelector('.poll-form')};
+    ui.mod.querySelector('[data-a=poll]').onclick=function(){ ui.pform.hidden=!ui.pform.hidden; if(!ui.pform.hidden) renderPollForm(); };
     ui.mod.querySelector('[data-a=lock]').onclick=function(){ socket.emit('lock',!locked); };
     ui.mod.querySelector('[data-a=clear]').onclick=function(){ if(confirm('Clear all messages in this room?')) socket.emit('clear'); };
     ui.mod.querySelector('[data-a=export]').href=CHAT_SERVER+'/export.csv?key='+encodeURIComponent(modKey);
-    renderForm(); renderList([]);
+    renderForm(); renderList([]); renderPoll();
+  }
+  function renderPoll(){
+    if(!ui) return; var L=t();
+    if(!poll){ ui.poll.innerHTML=''; return; }
+    var total=poll.total||0, showRes=isMod||myVote!==null||!poll.open, h='';
+    h+='<div class="poll-tag">'+L.poll+(poll.open?'':' · '+L.pclosed)+'</div><div class="poll-q">'+esc(poll.question)+'</div>';
+    poll.options.forEach(function(o,i){
+      if(showRes){
+        var pct=total?Math.round(poll.counts[i]*100/total):0;
+        h+='<div class="poll-bar'+(myVote===i?' mine':'')+'"><i style="width:'+pct+'%"></i><span><span>'+esc(o)+'</span><b>'+pct+'%</b></span></div>';
+      } else {
+        h+='<button type="button" class="poll-opt" data-i="'+i+'">'+esc(o)+'</button>';
+      }
+    });
+    h+='<div class="poll-meta">'+total+' '+(total===1?L.ponevote:L.votes)+(myVote!==null?' · '+L.pthanks:'')+'<span class="poll-err" style="color:#C0392B;margin-left:6px"></span></div>';
+    ui.poll.innerHTML=h;
+    ui.poll.querySelectorAll('.poll-opt').forEach(function(b){ b.onclick=function(){
+      var i=+b.dataset.i;
+      socket.emit('poll:vote',{id:poll.id,index:i,voterId:voterId},function(r){
+        if(r&&r.ok){ myVote=r.voted; renderPoll(); }
+        else if(r&&r.error){ if(r.voted!==undefined&&r.voted!==null) myVote=r.voted; renderPoll(); var e=ui.poll.querySelector('.poll-err'); if(e) e.textContent=r.error; }
+      });
+    }; });
+  }
+  function pairRooms(){ return STREAMS.filter(function(s){return s.key==='en'||s.key==='fr';}).map(function(s){return s.room;}); }
+  function isMain(){ return current&&(current.key==='en'||current.key==='fr'); }
+  function renderPollForm(){
+    var f=ui.pform;
+    if(poll&&poll.open){
+      f.innerHTML='<div style="font-size:12.5px;color:var(--navy);font-weight:600">Poll running: '+esc(poll.question)+' ('+(poll.total||0)+' votes)</div>'+
+        (isMain()?'<label><input type="checkbox" id="pAll" checked> Apply to English and Français</label>':'')+
+        '<div class="row"><button type="button" data-a="close">Close voting</button><button type="button" class="sec" data-a="remove">Remove poll</button></div>';
+    } else {
+      f.innerHTML='<input type="text" id="pQ" maxlength="300" placeholder="Poll question">'+
+        '<textarea id="pO" rows="4" placeholder="Options, one per line (2–8)"></textarea>'+
+        (isMain()?'<label><input type="checkbox" id="pAll" checked> Run in both English and Français</label>':'<label style="color:var(--navy)">This poll runs in '+esc(current.label)+' only</label>')+
+        '<div class="row"><button type="button" data-a="start">Start poll</button>'+(poll?'<button type="button" class="sec" data-a="remove">Remove closed poll</button>':'')+
+        '<a class="sec" style="font-size:12px;align-self:center;color:var(--teal)" target="_blank" href="'+CHAT_SERVER+'/polls.csv?key='+encodeURIComponent(modKey)+'">Poll results CSV</a></div><div class="pf-err" style="font-size:12px;color:#C0392B"></div>';
+    }
+    function rooms(){ var c=f.querySelector('#pAll'); return c&&c.checked?pairRooms():[current.room]; }
+    var b;
+    if((b=f.querySelector('[data-a=start]'))) b.onclick=function(){
+      var q=f.querySelector('#pQ').value.trim(), opts=f.querySelector('#pO').value.split('\n').map(function(x){return x.trim();}).filter(Boolean);
+      socket.emit('poll:start',{question:q,options:opts,rooms:rooms()},function(r){ if(r&&r.error) f.querySelector('.pf-err').textContent=r.error; });
+    };
+    if((b=f.querySelector('[data-a=close]'))) b.onclick=function(){ socket.emit('poll:close',{rooms:rooms()}); };
+    if((b=f.querySelector('[data-a=remove]'))) b.onclick=function(){ if(confirm('Remove the poll from the chat? Results stay in the CSV.')) socket.emit('poll:remove',{rooms:rooms()}); };
   }
   function renderMod(){
     if(!ui) return; ui.mod.hidden=!isMod;
@@ -496,7 +572,7 @@ var STREAMS = [
   }
   function connect(){
     socket=io(CHAT_SERVER,{auth:{modKey:modKey},transports:['websocket','polling']});
-    socket.on('connect',function(){ clearTimeout(wakeTimer); status(''); if(current) socket.emit('join',{room:current.room,name:store.get('afcChatName')}); });
+    socket.on('connect',function(){ clearTimeout(wakeTimer); status(''); if(current) socket.emit('join',{room:current.room,name:store.get('afcChatName'),voterId:voterId}); });
     socket.on('disconnect',function(){ status(t().offline); });
     socket.on('connect_error',function(){ status(t().waking); });
     socket.on('hello',function(h){ isMod=!!h.isMod; renderMod(); });
@@ -505,15 +581,30 @@ var STREAMS = [
     socket.on('deleted',function(id){ var el=ui.list.querySelector('[data-id="'+id+'"]'); if(el) el.remove(); });
     socket.on('cleared',function(){ renderList([]); });
     socket.on('locked',function(x){ if(current&&x.room===current.room){ locked=x.locked; renderMod(); renderForm(); } });
+    socket.on('poll',function(x){ if(current&&x.room===current.room){ poll=x.poll; myVote=(x.voted===undefined?null:x.voted); renderPoll(); if(ui&&!ui.pform.hidden) renderPollForm(); } });
+    socket.on('poll:update',function(x){ if(current&&x.room===current.room){ poll=x.poll; renderPoll(); if(ui&&!ui.pform.hidden) renderPollForm(); } });
     socket.on('presence',function(p){ if(current&&p.room===current.room) onlineEl.textContent=p.online+' '+t().online; });
   }
   function openChat(st){
     if(!ui) buildUI();
-    else { renderForm(); renderList([]); }
+    else { poll=null; myVote=null; renderForm(); renderList([]); renderPoll(); }
     onlineEl.textContent='';
     if(!socket){ status(t().connecting); wakeTimer=setTimeout(function(){ if(!socket||!socket.connected) status(t().waking); },4000);
       loadSocket(connect); }
-    else if(socket.connected){ socket.emit('join',{room:st.room,name:store.get('afcChatName')}); }
+    else if(socket.connected){ socket.emit('join',{room:st.room,name:store.get('afcChatName'),voterId:voterId}); }
+  }
+
+  /* ---------------- YoloLiv player (breakout rooms) ---------------- */
+  var yoloQ = null;
+  function loadYolo(cb){
+    if (window.renderYoloLiv) return cb();
+    if (yoloQ) { yoloQ.push(cb); return; }
+    yoloQ = [cb];
+    var js = document.createElement('script'); js.type = 'module'; js.charset = 'utf-8';
+    js.src = 'https://view.yololiv.com/entry.js';
+    js.onload = function(){ var q = yoloQ; yoloQ = null; q.forEach(function(f){ f(); }); };
+    js.onerror = function(){ yoloQ = null; };
+    document.head.appendChild(js);
   }
 
   /* ---------------- tabs ---------------- */
@@ -532,6 +623,11 @@ var STREAMS = [
       var on=b.dataset.key===st.key; b.classList.toggle('active',on); b.setAttribute('aria-selected',on);
     });
     // only the active stream is loaded, so audio never doubles up
+    if (st.yololiv) {
+      var yid = 'yololiv-widget-' + Date.now() + '-' + st.yololiv.eventId;
+      frame.innerHTML = '<div class="yolo-wrap"><div id="' + yid + '"></div></div>';
+      loadYolo(function(){ try { window.renderYoloLiv('#' + yid, st.yololiv); } catch(e) {} });
+    } else
     frame.innerHTML = st.video
       ? '<iframe src="'+st.video+'" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen title="'+esc(st.label)+' livestream"></iframe>'
       : holdVideo.replace(/<p>[\s\S]*?<\/p>/, '<p>'+st.hold+'</p>');
